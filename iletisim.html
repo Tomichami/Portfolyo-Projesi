@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İletişim | Kaan Semih Kurt</title>
+<meta name="description" content="Kaan Semih Kurt ile iletişime geç: iş teklifi, veri bilimi danışmanlığı veya sorular için form.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+<canvas id="spark" aria-hidden="true"></canvas>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html">&lt;kaan/&gt;</a>
+    <ul>
+      <li><a href="index.html">ana sayfa</a></li>
+      <li><a href="projeler.html">projeler</a></li>
+      <li><a href="iletisim.html" aria-current="page">iletişim</a></li>
+    </ul>
+  </div>
+</nav>
+<main class="wrap">
+  <div class="contact">
+
+
+    <section class="win">
+      <div class="bar"><i></i><i></i><i></i><b>yeni-mesaj.form</b></div>
+      <div class="body">
+        <h1>İletişim</h1>
+        <p class="sub" style="margin-bottom:24px">Formu doldur, mesajın doğrudan bana ulaşsın.</p>
+        <!-- action: Formspree'de oluşturduğun formun adresiyle değiştir (örn. https://formspree.io/f/xyzabcde) -->
+        <form id="contact-form" action="https://formspree.io/f/xdekjqaw" method="POST" accept-charset="UTF-8">
+
+          <div class="field">
+            <label for="ad">Ad</label>
+            <input id="ad" name="ad" type="text" placeholder="Adın" autocomplete="given-name" required>
+          </div>
+          <div class="field">
+            <label for="soyad">Soyad</label>
+            <input id="soyad" name="soyad" type="text" placeholder="Soyadın" autocomplete="family-name" required>
+          </div>
+
+          <div class="field">
+            <label for="email">E-posta adresi</label>
+            <input id="email" name="email" type="email" placeholder="ornek@mail.com" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="telefon">Telefon numarası</label>
+            <input id="telefon" name="telefon" type="tel" inputmode="tel" placeholder="05XX XXX XX XX" autocomplete="tel" pattern="[0-9+()\s\-]{10,18}" title="Geçerli bir telefon numarası gir (örn. 0507 045 45 07)" required>
+          </div>
+
+          <div class="field full">
+            <label for="neden">İletişim nedeni</label>
+            <select id="neden" name="iletisim_nedeni" required>
+              <option value="" disabled selected>Bir neden seç</option>
+              <option value="İş Teklifi">İş Teklifi</option>
+              <option value="Proje/Veri Bilimi Danışmanlığı">Proje/Veri Bilimi Danışmanlığı</option>
+              <option value="Soru">Soru</option>
+              <option value="Diğer">Diğer</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label for="mesaj">Detaylı mesaj</label>
+            <textarea id="mesaj" name="mesaj" placeholder="Merhaba Kaan, ..." maxlength="1000" required></textarea>
+            <span class="count" id="count">0 / 1000</span>
+          </div>
+
+          <!-- Spam koruması: botlar doldurur, insanlar görmez -->
+          <input class="hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <input type="hidden" name="_subject" value="Portfolyo sitesinden yeni mesaj">
+
+          <button class="btn primary" type="submit">Gönder</button>
+          <p class="hint">Tüm alanlar zorunludur.</p>
+        </form>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><p></p></div>
+
+<footer>
+  <div class="wrap">© <script>document.write(new Date().getFullYear())</script> Kaan Semih Kurt · Şehzadeler, Manisa</div>
+</footer>
+
+<script src="main.js"></script>
+<script>
+(() => {
+  const form = document.getElementById('contact-form');
+  const btn = form.querySelector('button[type="submit"]');
+  const toastEl = document.getElementById('toast');
+  const ta = form.elements.mesaj;
+  const cnt = document.getElementById('count');
+  let timer;
+
+  const count = () => { cnt.textContent = ta.value.length + ' / 1000'; };
+  ta.addEventListener('input', count);
+
+  function toast(msg, type = 'success') {
+    clearTimeout(timer);
+    toastEl.className = 'toast show ' + type;
+    toastEl.querySelector('p').textContent = msg;
+    timer = setTimeout(() => toastEl.classList.remove('show'), 5500);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // Yer tutucu adres değiştirilmediyse sahte başarı gösterme
+    if (form.action.includes('SENIN_FORM_KODUN')) {
+      toast('Form henüz bağlanmadı: iletisim.html içindeki action adresine Formspree form kodunu yaz.', 'error');
+      return;
+    }
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Gönderiliyor…';
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) throw new Error('send failed');
+      toast('Mesajın gönderildi! En kısa sürede dönüş yapacağım.');
+      form.reset();
+      count();
+    } catch (err) {
+      toast('Mesaj gönderilemedi. Lütfen biraz sonra tekrar dene.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  });
+})();
+</script>
+</body>
+</html>
